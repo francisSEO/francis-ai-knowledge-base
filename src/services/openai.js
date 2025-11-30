@@ -16,15 +16,26 @@ export async function chatWithAI(userMessage, urlContents) {
         if (urlContents && urlContents.length > 0) {
             context = '\n\nContexto de URLs guardadas:\n\n';
             urlContents.forEach((item, index) => {
-                context += `[${index + 1}] ${item.title || item.url}\n`;
+                context += `[${index}] ${item.title || item.url}\n`; // Use 0-based index for easier mapping
                 context += `Categoría: ${item.category}\n`;
-                context += `Contenido: ${item.content.substring(0, 1000)}...\n\n`;
+                context += `Contenido: ${item.content.substring(0, 5000)}...\n\n`;
             });
         }
 
-        const systemPrompt = `Eres un asistente útil que ayuda a los usuarios respondiendo sus preguntas basándote en el contenido de las URLs que han guardado.
+        const systemPrompt = `Eres un asistente útil que ayuda a los usuarios respondiendo sus preguntas basándote ÚNICAMENTE en el contenido de las URLs que han guardado.
 ${context}
-Por favor, proporciona una respuesta clara y concisa. Si encuentras información relevante en las URLs guardadas, menciona cuál URL contiene esa información.`;
+Instrucciones estrictas:
+1. Responde SOLO usando la información proporcionada en el contexto de las URLs arriba.
+2. Puedes y DEBES interpretar la intención del usuario y conectar conceptos relacionados (por ejemplo: si el usuario pregunta por "link building" y tienes contenido sobre "internal linking", DEBES usar esa información).
+3. Si la respuesta no se encuentra en el contexto ni siquiera por asociación de conceptos, di "Lo siento, no encuentro información sobre eso en tus enlaces guardados."
+4. No uses tu conocimiento general para agregar datos externos que no estén en el texto.
+5. Responde SIEMPRE en formato JSON con la siguiente estructura:
+{
+  "answer": "Tu respuesta aquí... (usa markdown para formato)",
+  "sources": [0, 2] // Array de números correspondientes a los índices de las URLs utilizadas
+}
+Si no usas ninguna URL, el array sources debe estar vacío.
+`;
 
         const completion = await openai.chat.completions.create({
             messages: [
@@ -32,9 +43,10 @@ Por favor, proporciona una respuesta clara y concisa. Si encuentras información
                 { role: "user", content: userMessage }
             ],
             model: "gpt-4o-mini",
+            response_format: { type: "json_object" }
         });
 
-        return completion.choices[0].message.content;
+        return JSON.parse(completion.choices[0].message.content);
     } catch (error) {
         console.error('Error al comunicarse con OpenAI:', error);
         throw new Error('No se pudo obtener respuesta de la IA. Verifica tu API key.');
