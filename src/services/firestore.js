@@ -1,3 +1,4 @@
+// src/services/firestore.js
 import {
     collection,
     addDoc,
@@ -7,17 +8,19 @@ import {
     query,
     where,
     orderBy,
-    Timestamp
+    updateDoc,
+    Timestamp,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const URLS_COLLECTION = 'urls';
 
+/** Save a new URL document */
 export async function saveUrl(urlData) {
     try {
         const docRef = await addDoc(collection(db, URLS_COLLECTION), {
             ...urlData,
-            createdAt: Timestamp.now()
+            createdAt: Timestamp.now(),
         });
         return { id: docRef.id, ...urlData };
     } catch (error) {
@@ -26,17 +29,13 @@ export async function saveUrl(urlData) {
     }
 }
 
+/** Get all URLs ordered by newest */
 export async function getAllUrls() {
     try {
-        const q = query(
-            collection(db, URLS_COLLECTION),
-            orderBy('createdAt', 'desc')
-        );
+        const q = query(collection(db, URLS_COLLECTION), orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(q);
         const urls = [];
-        querySnapshot.forEach((doc) => {
-            urls.push({ id: doc.id, ...doc.data() });
-        });
+        querySnapshot.forEach((doc) => urls.push({ id: doc.id, ...doc.data() }));
         return urls;
     } catch (error) {
         console.error('Error al obtener URLs:', error);
@@ -44,6 +43,7 @@ export async function getAllUrls() {
     }
 }
 
+/** Get URLs filtered by a specific category */
 export async function getUrlsByCategory(category) {
     try {
         const q = query(
@@ -53,9 +53,7 @@ export async function getUrlsByCategory(category) {
         );
         const querySnapshot = await getDocs(q);
         const urls = [];
-        querySnapshot.forEach((doc) => {
-            urls.push({ id: doc.id, ...doc.data() });
-        });
+        querySnapshot.forEach((doc) => urls.push({ id: doc.id, ...doc.data() }));
         return urls;
     } catch (error) {
         console.error('Error al obtener URLs por categoría:', error);
@@ -63,6 +61,7 @@ export async function getUrlsByCategory(category) {
     }
 }
 
+/** Delete a URL document */
 export async function deleteUrl(urlId) {
     try {
         await deleteDoc(doc(db, URLS_COLLECTION, urlId));
@@ -72,15 +71,27 @@ export async function deleteUrl(urlId) {
     }
 }
 
+/** Update fields of a URL document (e.g., category) */
+export async function updateUrl(urlId, data) {
+    try {
+        await updateDoc(doc(db, URLS_COLLECTION, urlId), data);
+    } catch (error) {
+        console.error('Error al actualizar URL:', error);
+        throw new Error('No se pudo actualizar la URL');
+    }
+}
+
+/** Search URLs by a free‑text term */
 export async function searchUrls(searchTerm) {
     try {
         const allUrls = await getAllUrls();
-        const searchLower = searchTerm.toLowerCase();
-        return allUrls.filter(url =>
-            url.title?.toLowerCase().includes(searchLower) ||
-            url.url?.toLowerCase().includes(searchLower) ||
-            url.content?.toLowerCase().includes(searchLower) ||
-            url.category?.toLowerCase().includes(searchLower)
+        const lower = searchTerm.toLowerCase();
+        return allUrls.filter(
+            (url) =>
+                url.title?.toLowerCase().includes(lower) ||
+                url.url?.toLowerCase().includes(lower) ||
+                url.content?.toLowerCase().includes(lower) ||
+                url.category?.toLowerCase().includes(lower)
         );
     } catch (error) {
         console.error('Error al buscar URLs:', error);
