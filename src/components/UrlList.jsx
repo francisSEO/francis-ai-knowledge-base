@@ -33,6 +33,20 @@ export default function UrlList({ urls, onUrlDeleted }) {
     }
   };
 
+  const handleDeleteTag = async (urlId, tagToDelete) => {
+    if (!confirm(`Delete tag "${tagToDelete}"?`)) return;
+    try {
+      const urlToUpdate = urls.find(u => u.id === urlId);
+      if (!urlToUpdate) return;
+
+      const newTags = (urlToUpdate.tags || []).filter(t => t !== tagToDelete);
+      await updateUrl(urlId, { tags: newTags });
+      window.location.reload();
+    } catch (e) {
+      alert('Error deleting tag: ' + e.message);
+    }
+  };
+
   // Unique categories & tags for filters
   const categories = ['all', ...new Set(urls.map((u) => u.category).filter(Boolean))];
   const allTags = ['all', ...new Set(urls.flatMap((u) => u.tags || []))];
@@ -131,11 +145,20 @@ export default function UrlList({ urls, onUrlDeleted }) {
               {url.summary?.length > 100 ? '...' : ''}
             </p>
 
+            {/* ... (inside map) */}
             {url.tags && url.tags.length > 0 && (
               <div className="url-tags">
                 {url.tags.map((t, i) => (
-                  <span key={i} className="tag">
+                  <span key={`${t}-${i}`} className="tag">
                     {t}
+                    <button
+                      className="tag-delete-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTag(url.id, t);
+                      }}
+                      title="Remove tag"
+                    >×</button>
                   </span>
                 ))}
               </div>
@@ -157,7 +180,7 @@ export default function UrlList({ urls, onUrlDeleted }) {
         .url-list-container { display: flex; flex-direction: column; gap: 1rem; }
         .filters { display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: var(--bg-primary); margin-top: 2rem; }
         .filter-group { display: flex; align-items: center; gap: 0.375rem; color: var(--text-tertiary); }
-        .filter-select { padding: 0.25rem 0.5rem; background: transparent; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-tertiary); font-size: 0.8125rem; cursor: pointer; transition: all var(--transition); }
+        .filter-select { padding: 0.25rem 0.5rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-size: 0.8125rem; cursor: pointer; transition: all var(--transition); }
         .filter-select:hover { border-color: var(--border-hover); }
         .filter-select:focus { outline: none; border-color: var(--accent); }
         .url-list { display: flex; flex-direction: column; gap: 0.75rem; }
@@ -172,7 +195,9 @@ export default function UrlList({ urls, onUrlDeleted }) {
         .url-title { font-size: 0.9375rem; font-weight: 600; margin-bottom: 0.5rem; line-height: 1.4; color: var(--text-primary); }
         .url-content { color: var(--text-secondary); font-size: 0.8125rem; line-height: 1.5; margin-bottom: 0.75rem; }
         .url-tags { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.75rem; }
-        .tag { display: inline-block; padding: 0.125rem 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; }
+        .tag { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.125rem 0.5rem; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.6875rem; color: var(--text-tertiary); font-weight: 500; }
+        .tag-delete-btn { display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border-radius: 50%; background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; transition: all 0.2s; padding: 0; }
+        .tag-delete-btn:hover { background: rgba(255, 255, 255, 0.2); color: var(--text-primary); }
         .url-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 0.625rem; border-top: 1px solid var(--border); }
         .url-link { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--accent); text-decoration: none; font-size: 0.75rem; font-weight: 500; transition: all var(--transition); }
         .url-link:hover { color: var(--accent-hover); gap: 0.375rem; }

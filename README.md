@@ -1,168 +1,110 @@
-# AI Knowledge Base - Chat con URLs
+# AI Knowledge Base - Chat with URLs
 
-Una aplicación moderna que te permite guardar URLs, extraer su contenido automáticamente usando IA, y chatear con ese contenido para obtener respuestas inteligentes.
+A modern application that allows you to save URLs, automatically extract their content using AI, and chat with that content to get intelligent answers.
 
-## 🚀 Características
+## 🚀 Features
 
-- ✨ **Interfaz moderna y atractiva** con gradientes, animaciones y diseño dark mode
-- 🔗 **Gestión de URLs** - Agrega URLs y la IA extrae y categoriza el contenido automáticamente
-- 💬 **Chat con IA** - Pregunta sobre el contenido de tus URLs guardadas
-- 🗂️ **Categorización automática** - La IA organiza tus URLs por categorías
-- 🔍 **Búsqueda y filtros** - Encuentra rápidamente lo que necesitas
-- 💾 **Persistencia en Firestore** - Tus datos se guardan de forma segura en la nube
-- 📱 **Diseño responsive** - Funciona perfectamente en móviles y escritorio
+- ✨ **Modern & Aesthetic Interface** - Dark mode design with gradients and smooth animations.
+- 🔗 **URL Management** - Add URLs and let AI extract and categorize content automatically.
+- 🛠️ **Manual Control** - Option to manually categorize and tag URLs, skipping AI processing for faster adding.
+- ✏️ **Edit & Organize** - Easily edit categories and **delete tags** directly from the list view.
+- 💬 **AI Chat** - Ask questions based specifically on the content of your saved URLs.
+- 🗂️ **Smart Categorization** - Default "Product" category with AI fallback for automatic classification.
+- 🔍 **Search & Filters** - Quickly find links with improved category and tag filters.
+- 💾 **Cloud Persistence** - Data securely stored in Firebase Firestore.
+- 📱 **Responsive Design** - Works perfectly on mobile and desktop.
 
-## 🛠️ Tecnologías
+## 🛠️ Tech Stack
 
-- **React** + **Vite** - Framework moderno y rápido
-- **Firebase Firestore** - Base de datos en tiempo real
-- **Google Gemini AI** - IA gratuita para chat y extracción de contenido
-- **Lucide React** - Iconos modernos
+- **React** + **Vite** - Fast and modern frontend framework.
+- **Firebase Firestore** - Real-time NoSQL database.
+- **OpenAI (GPT-4o-mini)** - Powering content extraction, summarization, and chat context.
+- **Lucide React** - Beautiful, consistent icons.
 
-## 📋 Requisitos previos
+## 📋 Prerequisites
 
-1. **Node.js** (versión 16 o superior)
-2. **Cuenta de Firebase** (gratuita)
-3. **API Key de Gemini** (gratuita)
+1. **Node.js** (version 16 or higher)
+2. **Firebase Account** (Free tier works)
+3. **OpenAI API Key**
 
-## ⚙️ Configuración
+## ⚙️ Setup
 
-### 1. Configurar Firebase
+### 1. Configure Firebase
 
-1. Ve a [Firebase Console](https://console.firebase.google.com/)
-2. Crea un nuevo proyecto (o usa uno existente)
-3. En la configuración del proyecto, ve a "Configuración del proyecto"
-4. En "Tus apps", crea una nueva app web
-5. Copia la configuración de Firebase
-6. Abre `src/firebase.js` y reemplaza los valores:
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create a new project.
+3. Register a web app in the project settings.
+4. Copy your Firebase configuration.
+5. Create a `.env` file (see `.env.example`) or update `src/firebase.js`:
 
 ```javascript
 const firebaseConfig = {
-  apiKey: "tu-api-key-aqui",
-  authDomain: "tu-proyecto.firebaseapp.com",
-  projectId: "tu-proyecto-id",
-  storageBucket: "tu-proyecto.appspot.com",
+  apiKey: "your-api-key",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
   messagingSenderId: "123456789",
-  appId: "tu-app-id"
+  appId: "your-app-id"
 };
 ```
 
-7. En Firebase Console, ve a "Firestore Database" y crea una base de datos
-8. Selecciona "Comenzar en modo de prueba" (puedes configurar reglas de seguridad después)
+6. Enable **Firestore Database** in the console and start in "Test Mode".
 
-### 2. Configurar Gemini AI
+### 2. Configure OpenAI
 
-1. Ve a [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Inicia sesión con tu cuenta de Google
-3. Crea una nueva API key (es **GRATIS** con límites generosos)
-4. Copia la API key
-5. Abre `src/services/gemini.js` y reemplaza:
+1. Get your API Key from [OpenAI Platform](https://platform.openai.com/api-keys).
+2. Add it to your `.env` file:
 
-```javascript
-const API_KEY = 'tu-gemini-api-key-aqui';
+```env
+VITE_OPENAI_API_KEY=your_sk_key_here
 ```
 
-### 3. Instalar dependencias
+### 3. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 4. Ejecutar la aplicación
+### 4. Run the Application
 
 ```bash
 npm run dev
 ```
 
-La aplicación estará disponible en `http://localhost:5173`
+The app will be available at `http://localhost:5173`.
 
-## 📖 Cómo usar
+## 📖 How to Use
 
-### Agregar URLs
+### Adding URLs
 
-1. Ve a la pestaña "Gestión de URLs"
-2. Pega una URL en el campo de entrada
-3. Haz clic en "Agregar URL"
-4. La IA extraerá automáticamente el contenido y lo categorizará
-5. La URL se guardará en Firestore
+1. Go to the "Manage URLs" tab.
+2. Paste a link.
+3. (Optional) Select a **Category** or add **Tags** manually.
+4. Click "Add Link". The AI will process the rest if fields are left empty.
 
-### Chatear con la IA
+### Managing Content
 
-1. Ve a la pestaña "Chat con IA"
-2. Escribe tu pregunta en el campo de entrada
-3. La IA buscará en tus URLs guardadas y te dará una respuesta
-4. Si encuentra información relevante, te dirá en qué URL está
+- **Delete Link**: Click the trash icon.
+- **Change Category**: Click on the category badge to select a new one.
+- **Remove Tag**: Click the 'x' button next to any tag to remove it.
 
-### Buscar y filtrar
+### Chatting with AI
 
-1. En la pestaña "Gestión de URLs", usa el campo de búsqueda
-2. Filtra por categoría usando el selector
-3. Elimina URLs que ya no necesites
+1. Switch to the "Chat with AI" tab.
+2. Ask a question.
+3. The AI will answer using **only** the knowledge from your saved links, citing sources.
 
-## 🎨 Personalización
+## 🔒 Security Note
 
-### Cambiar colores
+⚠️ **IMPORTANT**: API keys are currently exposed in the client code for demonstration/personal ease of use. For a production environment:
 
-Edita las variables CSS en `src/index.css`:
+1. Move AI calls to a backend (Node.js/Express, Firebase Functions, or Next.js API routes).
+2. Secure Firestore with proper security rules.
 
-```css
-:root {
-  --primary-hue: 260; /* Cambia el tono principal */
-  --primary-sat: 85%; /* Cambia la saturación */
-  --primary-light: 60%; /* Cambia la luminosidad */
-}
-```
-
-## 🔒 Seguridad
-
-⚠️ **IMPORTANTE**: Las API keys están en el código del cliente por simplicidad. Para producción:
-
-1. Crea un backend que maneje las llamadas a Gemini
-2. Configura reglas de seguridad en Firestore
-3. Usa variables de entorno para las API keys
-
-Ejemplo de reglas de Firestore básicas:
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /urls/{document=**} {
-      allow read, write: if request.auth != null;
-    }
-  }
-}
-```
-
-## 📦 Build para producción
-
-```bash
-npm run build
-```
-
-Los archivos optimizados estarán en la carpeta `dist/`
-
-## 🐛 Solución de problemas
-
-### Error: "Firebase not configured"
-- Verifica que hayas configurado correctamente `src/firebase.js`
-
-### Error: "Gemini API key invalid"
-- Verifica que tu API key sea correcta en `src/services/gemini.js`
-- Asegúrate de que la API key esté activa en Google AI Studio
-
-### Las URLs no se guardan
-- Verifica que Firestore esté habilitado en Firebase Console
-- Revisa las reglas de seguridad de Firestore
-
-## 📄 Licencia
+## 📄 License
 
 MIT
 
-## 🤝 Contribuciones
-
-¡Las contribuciones son bienvenidas! Siéntete libre de abrir issues o pull requests.
-
 ---
 
-Hecho con ❤️ usando React, Firebase y Gemini AI
+Built with ❤️ using React, Firebase, and OpenAI.

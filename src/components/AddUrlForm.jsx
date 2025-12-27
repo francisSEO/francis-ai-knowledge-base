@@ -5,8 +5,12 @@ import { saveUrl } from '../services/firestore';
 
 export default function AddUrlForm({ onUrlAdded }) {
   const [url, setUrl] = useState('');
+  const [category, setCategory] = useState('Product');
+  const [tags, setTags] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const categories = ['SEO', 'Product', 'Analysis', 'Strategy', 'Leadership', 'Frameworks', 'Business'];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,7 +31,13 @@ export default function AddUrlForm({ onUrlAdded }) {
     setIsLoading(true);
 
     try {
-      const extracted = await extractUrlContent(url);
+      // Split tags by comma and trim
+      const tagList = tags.split(',').map(t => t.trim()).filter(Boolean);
+
+      const extracted = await extractUrlContent(url, {
+        manualCategory: category,
+        manualTags: tagList
+      });
 
       const savedUrl = await saveUrl({
         title: extracted.title,
@@ -41,6 +51,8 @@ export default function AddUrlForm({ onUrlAdded }) {
       });
 
       setUrl('');
+      setTags('');
+      setCategory('Product'); // reset to default
 
       if (onUrlAdded) {
         onUrlAdded(savedUrl);
@@ -55,29 +67,51 @@ export default function AddUrlForm({ onUrlAdded }) {
   return (
     <div className="add-url-form">
       <form onSubmit={handleSubmit} className="form-content">
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="Paste a URL..."
-          className="input"
-          disabled={isLoading}
-        />
+        <div className="input-group full-width">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Paste a URL..."
+            className="input"
+            disabled={isLoading}
+          />
+        </div>
 
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <Loader className="spinner" size={16} />
-              Analyzing...
-            </>
-          ) : (
-            'Add Link'
-          )}
-        </button>
+        <div className="input-row">
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="select"
+            disabled={isLoading}
+          >
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+
+          <input
+            type="text"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="Tags (comma separated)..."
+            className="input"
+            disabled={isLoading}
+          />
+
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader className="spinner" size={16} />
+                Analyzing...
+              </>
+            ) : (
+              'Add Link'
+            )}
+          </button>
+        </div>
 
         {error && (
           <div className="alert alert-error animate-fade-in">
@@ -88,16 +122,58 @@ export default function AddUrlForm({ onUrlAdded }) {
 
       <style jsx>{`
         .add-url-form {
-          margin-bottom: 1.5rem;
+          margin-bottom: 2rem;
+          padding: 1.5rem;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-lg);
         }
 
         .form-content {
           display: flex;
-          gap: 0.5rem;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .full-width {
+            width: 100%;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .input, .select {
+            padding: 0.625rem 0.875rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            font-size: 0.9375rem;
+            transition: all var(--transition);
+        }
+        
+        .input:focus, .select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.1);
         }
 
         .input {
           flex: 1;
+        }
+        
+        .select {
+            width: 140px;
+            cursor: pointer;
         }
 
         .btn-primary {
@@ -118,8 +194,13 @@ export default function AddUrlForm({ onUrlAdded }) {
         }
 
         @media (max-width: 768px) {
-          .form-content {
+          .input-row {
             flex-direction: column;
+            align-items: stretch;
+          }
+          
+          .select {
+            width: 100%;
           }
         }
       `}</style>

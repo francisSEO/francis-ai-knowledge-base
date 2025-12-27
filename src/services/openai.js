@@ -46,7 +46,7 @@ export async function chatWithAI(userMessage, urlContents) {
 /**
  * Extract content from a URL using a stored Gemini prompt (via OpenAI responses API).
  */
-export async function extractUrlContent(url) {
+export async function extractUrlContent(url, options = {}) {
     try {
         console.log('🔍 Intentando extracción con OpenAI (Stored Prompt)...');
         console.log('📍 URL:', url);
@@ -105,50 +105,57 @@ export async function extractUrlContent(url) {
             summary = keyInsightsMatch[1].trim();
         }
 
+        // ... (previous code)
+
         // --- Category classification using AI ---
-        let category = 'Business'; // fallback
-        try {
-            const catResp = await openai.chat.completions.create({
-                model: 'gpt-4o-mini',
-                messages: [
-                    {
-                        role: 'system',
-                        content:
-                            'Eres un clasificador. Dada la siguiente pieza de texto, devuelve un JSON con un solo campo "category" que sea uno de los siguientes: SEO, Product, Analysis, Strategy, Leadership, Frameworks, Business.',
-                    },
-                    { role: 'user', content: text.slice(0, 3000) },
-                ],
-                response_format: { type: 'json_object' },
-            });
-            const parsed = JSON.parse(catResp.choices[0].message.content);
-            if (parsed && parsed.category) category = parsed.category;
-        } catch (e) {
-            console.warn('AI categorization failed, using fallback:', e);
+        let category = options?.manualCategory || 'Business'; // fallback
+        if (!options?.manualCategory) {
+            try {
+                const catResp = await openai.chat.completions.create({
+                    model: 'gpt-4o-mini',
+                    messages: [
+                        {
+                            role: 'system',
+                            content:
+                                'Eres un clasificador. Dada la siguiente pieza de texto, devuelve un JSON con un solo campo "category" que sea uno de los siguientes: SEO, Product, Analysis, Strategy, Leadership, Frameworks, Business.',
+                        },
+                        { role: 'user', content: text.slice(0, 3000) },
+                    ],
+                    response_format: { type: 'json_object' },
+                });
+                const parsed = JSON.parse(catResp.choices[0].message.content);
+                if (parsed && parsed.category) category = parsed.category;
+            } catch (e) {
+                console.warn('AI categorization failed, using fallback:', e);
+            }
         }
 
         // Tag extraction based on predefined keywords
-        const tagKeywords = {
-            AI: ['ai', 'artificial intelligence', 'machine learning', 'gpt', 'llm', 'chatgpt', 'openai', 'neural', 'agents', 'automation with ai'],
-            'Product Management': ['product manager', 'product management', 'roadmap', 'prioritization', 'backlog', 'mvp', 'hypothesis', 'validation', 'discovery', 'user research', 'product thinking', 'strategy', 'feature', 'pm', 'launch', 'iteration', 'tradeoff'],
-            Data: ['data', 'analytics', 'metrics', 'kpi', 'insights', 'dashboards', 'data-informed', 'decision making', 'experiments', 'ab testing'],
-            'Automation & No-Code': ['nocode', 'n8n', 'zapier', 'automation', 'workflow', 'automate', 'make.com', 'scripts', 'bot', 'process automation'],
-            'SEO & Growth': ['seo', 'keywords', 'search', 'visibility', 'content strategy', 'growth', 'organic', 'ranking', 'distribution'],
-            'Design & UX': ['design', 'figma', 'ui', 'ux', 'interface', 'prototyping', 'wireframe', 'user flow', 'experience', 'design thinking'],
-            Development: ['code', 'developer', 'software', 'engineering', 'frontend', 'backend', 'javascript', 'api'],
-            'Philosophy & Mindset': ['mindset', 'philosophy', 'reflection', 'meaning', 'deep work', 'thinking', 'purpose', 'values', 'mental models'],
-            Productivity: ['productivity', 'efficiency', 'workflow', 'time management', 'habits', 'focus', 'systems'],
-            'Teams & Leadership': ['team', 'collaboration', 'communication', 'culture', 'leadership', 'alignment', 'ownership', 'accountability'],
-            'Customer & Users': ['customer', 'users', 'client', 'feedback', 'pain points', 'user needs', 'interviews'],
-        };
-        const lowerText = text.toLowerCase();
-        const tags = [];
-        for (const [tag, keywords] of Object.entries(tagKeywords)) {
-            if (keywords.some((kw) => lowerText.includes(kw))) {
-                tags.push(tag);
-                if (tags.length >= 2) break;
+        let tags = options?.manualTags || [];
+        if (!options?.manualTags || options.manualTags.length === 0) {
+            const tagKeywords = {
+                AI: ['ai', 'artificial intelligence', 'machine learning', 'gpt', 'llm', 'chatgpt', 'openai', 'neural', 'agents', 'automation with ai'],
+                'Product Management': ['product manager', 'product management', 'roadmap', 'prioritization', 'backlog', 'mvp', 'hypothesis', 'validation', 'discovery', 'user research', 'product thinking', 'strategy', 'feature', 'pm', 'launch', 'iteration', 'tradeoff'],
+                Data: ['data', 'analytics', 'metrics', 'kpi', 'insights', 'dashboards', 'data-informed', 'decision making', 'experiments', 'ab testing'],
+                'Automation & No-Code': ['nocode', 'n8n', 'zapier', 'automation', 'workflow', 'automate', 'make.com', 'scripts', 'bot', 'process automation'],
+                'SEO & Growth': ['seo', 'keywords', 'search', 'visibility', 'content strategy', 'growth', 'organic', 'ranking', 'distribution'],
+                'Design & UX': ['design', 'figma', 'ui', 'ux', 'interface', 'prototyping', 'wireframe', 'user flow', 'experience', 'design thinking'],
+                Development: ['code', 'developer', 'software', 'engineering', 'frontend', 'backend', 'javascript', 'api'],
+                'Philosophy & Mindset': ['mindset', 'philosophy', 'reflection', 'meaning', 'deep work', 'thinking', 'purpose', 'values', 'mental models'],
+                Productivity: ['productivity', 'efficiency', 'workflow', 'time management', 'habits', 'focus', 'systems'],
+                'Teams & Leadership': ['team', 'collaboration', 'communication', 'culture', 'leadership', 'alignment', 'ownership', 'accountability'],
+                'Customer & Users': ['customer', 'users', 'client', 'feedback', 'pain points', 'user needs', 'interviews'],
+            };
+
+            const lowerText = text.toLowerCase();
+            for (const [tag, keywords] of Object.entries(tagKeywords)) {
+                if (keywords.some((kw) => lowerText.includes(kw))) {
+                    tags.push(tag);
+                    if (tags.length >= 2) break;
+                }
             }
+            if (tags.length === 0) tags.push(category);
         }
-        if (tags.length === 0) tags.push(category);
 
         const extractedData = {
             title,
